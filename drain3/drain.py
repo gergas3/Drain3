@@ -259,13 +259,21 @@ class Drain:
             content = content.replace(delimiter, " ")
 
         content_tokens = content.split()
+        return self.fit_predict(content_tokens)
 
+    def fit_predict(self, content_tokens):
+        match_cluster = self.predict(content_tokens)
+        return self.fit(content_tokens, match_cluster)
+
+    def predict(self, content_tokens):
         if self.profiler:
             self.profiler.start_section("tree_search")
         match_cluster = self.tree_search(self.root_node, content_tokens)
         if self.profiler:
             self.profiler.end_section()
+        return match_cluster
 
+    def fit(self, content_tokens, match_cluster):
         # Match no existing log cluster
         if match_cluster is None:
             if self.profiler:

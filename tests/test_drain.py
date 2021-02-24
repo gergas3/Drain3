@@ -76,6 +76,70 @@ class DrainTest(unittest.TestCase):
         self.assertListEqual(list(map(str.strip, expected)), actual)
         self.assertEqual(8, model.get_total_cluster_size())
 
+    def test_depth_4(self):
+        """When `depth` is set to 4 then the first token is never wild-carded because it's part of the prefix tree"""
+        model = Drain(
+            depth=4,
+            sim_th=0.3,
+            max_children=100,
+        )
+        entries = str.splitlines(
+            """
+            X A B
+            X A C
+            Y A B
+            Y A C
+            """
+        )
+        expected = str.splitlines(
+            """
+            X A B
+            X A <*>
+            Y A B
+            Y A <*>
+            """
+        )
+        actual = []
+
+        for entry in entries:
+            cluster, change_type = model.add_log_message(entry)
+            actual.append(cluster.get_template())
+
+        self.assertListEqual(list(map(str.strip, expected)), actual)
+        self.assertEqual(6, model.get_total_cluster_size())
+
+    def test_depth_3(self):
+        """When `depth` is set to 3 then there is no prefixing based on any of the tokens"""
+        model = Drain(
+            depth=3,
+            sim_th=0.3,
+            max_children=100,
+        )
+        entries = str.splitlines(
+            """
+            X A B
+            X A C
+            Y A B
+            Y A C
+            """
+        )
+        expected = str.splitlines(
+            """
+            X A B
+            X A <*>
+            <*> A <*>
+            <*> A <*>
+            """
+        )
+        actual = []
+
+        for entry in entries:
+            cluster, change_type = model.add_log_message(entry)
+            actual.append(cluster.get_template())
+
+        self.assertListEqual(list(map(str.strip, expected)), actual)
+        self.assertEqual(6, model.get_total_cluster_size())
+
     def test_max_clusters(self):
         """Verify model respects the max_clusters option.
         
