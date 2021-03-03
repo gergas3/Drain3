@@ -135,12 +135,16 @@ class Drain:
             at_max_depth = current_depth == self.depth
             is_last_token = current_depth == token_count
             if at_max_depth or is_last_token:
-                # Clean up stale clusters before adding a new one.
-                new_cluster_ids = [cluster.cluster_id]
-                for cluster_id in parent_node.cluster_ids:
-                    if cluster_id in self.id_to_cluster:
-                        new_cluster_ids.append(cluster_id)
-                parent_node.cluster_ids = new_cluster_ids
+                if self.max_clusters is None:
+                    parent_node.cluster_ids.append(cluster.cluster_id)
+                else:
+                    # We are using LRUCache.
+                    # Clean up stale clusters before adding a new one.
+                    new_cluster_ids = [cluster.cluster_id]
+                    for cluster_id in parent_node.cluster_ids:
+                        if cluster_id in self.id_to_cluster:
+                            new_cluster_ids.append(cluster_id)
+                    parent_node.cluster_ids = new_cluster_ids
                 break
 
             # If token not matched in this layer of existing tree.
